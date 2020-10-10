@@ -62,12 +62,54 @@ int main(int argc, char *argv[])
     if (n < 0) error("ERROR reading from socket");
     printf("Here is the message: %s\n", buffer);
 
+    /*FILE *fp;*/
+    FILE *filepointer;
+    char filecontent;
+    char filebuffer[1000];
+    char rspheader[1000] = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: ";
+    //<html><body><p>Hello, World! I’m the best MIS 596A website.</p><body></html>
+    /*fp = fopen("/home/mininet/MIS596A_Cloud/Cloud/Cloud/index.html", "w+");
+    fprintf(fp, "This is testing for fprintf...\n");
+    fputs("This is testing for fputs...\n", fp);
+    fclose(fp);*/
+
+    // Open file 
+    filepointer = fopen("/home/mininet/MIS596A_Cloud/Cloud/Cloud/index.html", "r"); 
+      
+    filecontent = fgetc(filepointer); 
+    int i =0;
+    while (filecontent != EOF) 
+    { 
+        printf ("%c", filecontent); 
+        filebuffer[i] = filecontent;
+        i++;
+        filecontent = fgetc(filepointer); 
+        
+    } 
+    //filebuffer = filecontent;
+    char stringlen[5];
+    int len = strlen(filebuffer);
+    sprintf(stringlen, "%d", len);
+    //printf("length of buffer is %d", len);
+    strcat(rspheader, stringlen);
+    strcat(rspheader, "\n\n");
+    strcat(rspheader, filebuffer);
+    //printf("file buffer is %s\n", rspheader);
+    fclose(filepointer); 
+
     //reply to client
-    n = write(newsockfd, "I got your message", 18);
+    //(char*)&reply
+    //n = write(newsockfd, "I got your message", 18);
+    //write(newsockfd, "HTTP/1.1 200 OK\n", 16);
+    //write(newsockfd, "Content-length: 151\n", 19); ///here still is a problem mentioned above
+    //write(newsockfd, "Content-Type: text/html\n\n", 25);
+    n = write(newsockfd, (char*)&rspheader , strlen(rspheader));
     if (n < 0) error("ERROR writing to socket");
 
     close(newsockfd);  // close connection
     close(sockfd);
 
     return 0;
+
+
 }
