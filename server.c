@@ -19,6 +19,50 @@ void error(char *msg)
     exit(1);
 }
 
+// reference for code to replace a string : https://www.faceprep.in/c/program-to-replace-a-substring-in-a-string/
+void replaceSubstring(char string[],char sub[],char new_str[])
+{
+int stringLen,subLen,newLen;
+int i=0,j,k;
+int flag=0,start,end;
+stringLen=strlen(string);
+subLen=strlen(sub);
+newLen=strlen(new_str);
+
+for(i=0;i<stringLen;i++)
+{
+flag=0;
+start=i;
+for(j=0;string[i]==sub[j];j++,i++)
+if(j==subLen-1)
+flag=1;
+end=i;
+if(flag==0)
+i-=j;
+else
+{
+for(j=start;j<end;j++)
+{
+for(k=start;k<stringLen;k++)
+string[k]=string[k+1];
+stringLen--;
+i--;
+}
+
+for(j=start;j<start+newLen;j++)
+{
+for(k=stringLen;k>=j;k--)
+string[k+1]=string[k];
+string[j]=new_str[j-start];
+stringLen++;
+i++;
+}
+}
+}
+}
+
+
+
 int main(int argc, char *argv[])
 {
     int sockfd, newsockfd, portno;
@@ -62,11 +106,6 @@ int main(int argc, char *argv[])
     if (n < 0) error("ERROR reading from socket");
     printf("Here is the message: %s\n", buffer);
 
-    /*FILE *fp;*/
-    FILE *filepointer;
-    char filecontent;
-    char filebuffer[1000];
-    char rspheader[1000] = "HTTP/1.1 200 OK\nContent-Type: ";
     char filepath[1000] = "/home/mininet/MIS596A_Cloud/Cloud/Cloud";
     char path[100];
     int start_pos;
@@ -77,7 +116,9 @@ int main(int argc, char *argv[])
     int k;
     int p;
     int q;
+    int z;
     int r=0;
+    int flag =0;
     char type[10];
     int result;
     char contenttype[100];
@@ -92,8 +133,8 @@ int main(int argc, char *argv[])
     }
 
     for(p=m; p<(strlen(buffer)) ; p++){
-        if(buffer[p]==' '){
-            end_pos = p;
+        if(buffer[p]=='H'){
+            end_pos = p-1;
             break;    
         }
     }
@@ -113,60 +154,97 @@ int main(int argc, char *argv[])
             }
         }
     }
-    printf("type is: %s\n", type);
-
+    //printf("type is: %s\n", type);
+    int typeflag=0;
     result = strcmp(type, ".png");
     if (result == 0){
         strcpy(contenttype, "image/png");
+        typeflag=1;
+    }
+    result = strcmp(type, ".jpg");
+    if (result == 0){
+        strcpy(contenttype, "image/jpg");
+        typeflag=1;
+    }
+    result = strcmp(type, ".jpeg");
+    if (result == 0){
+        strcpy(contenttype, "image/jpeg");
+        typeflag=1;
+    }
+    result = strcmp(type, ".gif");
+    if (result == 0){
+        strcpy(contenttype, "image/gif");
+        typeflag=1;
     }
     result = strcmp(type, ".html");
     if (result == 0){
         strcpy(contenttype, "text/html");
+        typeflag=1;
     }
-    strcat(rspheader, contenttype);
-    strcat(rspheader, "\nContent-Length: ");
+    result = strcmp(type, ".htm");
+    if (result == 0){
+        strcpy(contenttype, "text/html");
+        typeflag=1;
+    }
+    result = strcmp(type, ".txt");
+    if (result == 0){
+        strcpy(contenttype, "text/plain");
+        typeflag=1;
+    }
+    if (typeflag == 0){
+        strcpy(contenttype, "text/plain");
+        typeflag=1;
+    }
 
-
+    //replacing space characted %20 with space in the file name
+    replaceSubstring(path,"%20"," ");
+  
+    // adding 32 to ascii value for lowecase, assumption all files are named lower case in the filesystem
+   int y;
+   for(y=0;y<strlen(path);y++){
+      if(path[y]>=65 && path[y]<=90)
+         path[y]=path[y]+32;
+   }
     strcat(filepath, path);
-    printf("filepath is: %s\n", filepath);
-    //<html><body><p>Hello, World! I’m the best MIS 596A website.</p><body></html>
-    /*fp = fopen("/home/mininet/MIS596A_Cloud/Cloud/Cloud/index.html", "w+");
-    fprintf(fp, "This is testing for fprintf...\n");
-    fputs("This is testing for fputs...\n", fp);
-    fclose(fp);*/
+    //printf("filepath is: %s\n", filepath);
 
-    // Open file 
-    filepointer = fopen(filepath, "r"); 
+
+    // checking if file exists or not
+    char rsp[1000];
+    if( access( filepath, F_OK ) != -1 ) {
+    FILE *filepointer = fopen(filepath, "rb"); 
+
       
-    filecontent = fgetc(filepointer); 
-    int i =0;
-    while (filecontent != EOF) 
-    { 
-        printf ("%c", filecontent); 
-        filebuffer[i] = filecontent;
-        i++;
-        filecontent = fgetc(filepointer); 
-        
-    } 
-    //filebuffer = filecontent;
-    char stringlen[5];
-    int len = strlen(filebuffer);
-    sprintf(stringlen, "%d", len);
-    //printf("length of buffer is %d", len);
-    strcat(rspheader, stringlen);
-    strcat(rspheader, "\n\n");
-    strcat(rspheader, filebuffer);
-    //printf("file buffer is %s\n", rspheader);
-    fclose(filepointer); 
+    fseek(filepointer, 0L, SEEK_END);
+    int filelength = (int) ftell(filepointer);
+    fseek(filepointer, 0L, SEEK_SET);
 
-    //reply to client
-    //(char*)&reply
-    //n = write(newsockfd, "I got your message", 18);
-    //write(newsockfd, "HTTP/1.1 200 OK\n", 16);
-    //write(newsockfd, "Content-length: 151\n", 19); ///here still is a problem mentioned above
-    //write(newsockfd, "Content-Type: text/html\n\n", 25);
-    n = write(newsockfd, (char*)&rspheader , strlen(rspheader));
+    //header
+    
+    sprintf(rsp, "HTTP/1.1 200 OK\nContent-Length: %d\nContent-Type: %s\n\n", filelength, contenttype);
+    n = write(newsockfd, rsp, strlen(rsp));
     if (n < 0) error("ERROR writing to socket");
+     
+    //read content of file
+    char* filecontent = (char* ) malloc(sizeof(char) * filelength);
+    fread(filecontent, 1, filelength, filepointer);
+
+    n = write(newsockfd, filecontent, filelength);
+    if (n < 0) error("ERROR writing to socket");
+
+    free(memory);  
+    fclose(filepointer);
+
+    } else {
+    printf("file not found");
+    //sprintf(rsp, "HTTP/1.1 404 Not Found\nConnection: Close\n\nContent-Length: 0\nContent-Type: text/html\n");
+    int len = strlen("<html><body><h1>404 Not Found</h1></body></html>");
+    sprintf(rsp, "HTTP/1.1 404 Not Found\nContent-Length: %d\nContent-Type: %s\n\n<html><body><h1>404 Not Found</h1></body></html>", len, "text/html");
+    n = write(newsockfd, rsp, strlen(rsp));
+    if (n < 0) error("ERROR writing to socket");
+    }
+        
+    
 
     close(newsockfd);  // close connection
     close(sockfd);
