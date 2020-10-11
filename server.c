@@ -112,13 +112,13 @@ int main(int argc, char *argv[])
     int end_pos;
     int l=0;
     int m;
-    int j;
+    
     int k;
     int p;
     int q;
-    int z;
+   
     int r=0;
-    int flag =0;
+    
     char type[10];
     int result;
     char contenttype[100];
@@ -232,11 +232,11 @@ int main(int argc, char *argv[])
     n = write(newsockfd, filecontent, filelength);
     if (n < 0) error("ERROR writing to socket");
 
-    free(memory);  
+    free(filecontent);  
     fclose(filepointer);
 
     } else {
-    printf("file not found");
+    //printf("file not found");
     //sprintf(rsp, "HTTP/1.1 404 Not Found\nConnection: Close\n\nContent-Length: 0\nContent-Type: text/html\n");
     int len = strlen("<html><body><h1>404 Not Found</h1></body></html>");
     sprintf(rsp, "HTTP/1.1 404 Not Found\nContent-Length: %d\nContent-Type: %s\n\n<html><body><h1>404 Not Found</h1></body></html>", len, "text/html");
