@@ -66,7 +66,69 @@ int main(int argc, char *argv[])
     FILE *filepointer;
     char filecontent;
     char filebuffer[1000];
-    char rspheader[1000] = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: ";
+    char rspheader[1000] = "HTTP/1.1 200 OK\nContent-Type: ";
+    char filepath[1000] = "/home/mininet/MIS596A_Cloud/Cloud/Cloud";
+    char path[100];
+    int start_pos;
+    int end_pos;
+    int l=0;
+    int m;
+    int j;
+    int k;
+    int p;
+    int q;
+    int r=0;
+    char type[10];
+    int result;
+    char contenttype[100];
+
+    //code to fetch the path of file
+    for (m=0; m<(strlen(buffer)) ; m++){
+        if(buffer[m]=='/'){
+            start_pos = m; 
+            break;   
+        }
+        
+    }
+
+    for(p=m; p<(strlen(buffer)) ; p++){
+        if(buffer[p]==' '){
+            end_pos = p;
+            break;    
+        }
+    }
+
+    for(k = start_pos; k< end_pos;k++){
+        path[l] = buffer[k];
+        l++;
+    }
+
+    //dynamic content type
+    for(q=0; q< strlen(path); q++ ){
+        if(path[q]=='.'){
+            while(q<strlen(path)){
+                type[r]=path[q];
+                r++;
+                q++;
+            }
+        }
+    }
+    printf("type is: %s\n", type);
+
+    result = strcmp(type, ".png");
+    if (result == 0){
+        strcpy(contenttype, "image/png");
+    }
+    result = strcmp(type, ".html");
+    if (result == 0){
+        strcpy(contenttype, "text/html");
+    }
+    strcat(rspheader, contenttype);
+    strcat(rspheader, "\nContent-Length: ");
+
+
+    strcat(filepath, path);
+    printf("filepath is: %s\n", filepath);
     //<html><body><p>Hello, World! I’m the best MIS 596A website.</p><body></html>
     /*fp = fopen("/home/mininet/MIS596A_Cloud/Cloud/Cloud/index.html", "w+");
     fprintf(fp, "This is testing for fprintf...\n");
@@ -74,7 +136,7 @@ int main(int argc, char *argv[])
     fclose(fp);*/
 
     // Open file 
-    filepointer = fopen("/home/mininet/MIS596A_Cloud/Cloud/Cloud/index.html", "r"); 
+    filepointer = fopen(filepath, "r"); 
       
     filecontent = fgetc(filepointer); 
     int i =0;
