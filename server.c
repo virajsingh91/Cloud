@@ -88,7 +88,7 @@ int main( int argc, char *argv[])
     if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
         error("ERROR on binding");
 
-    listen(sockfd, 5);  // 5 simultaneous connection at most
+    listen(sockfd, 1);  // 5 simultaneous connection at most
 
     //accept connections
     newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
@@ -160,16 +160,12 @@ int main( int argc, char *argv[])
 
     //get name of file
     int e=0;
-    for(q=strlen(path); q>0; q-- ){
+    for(q=1; q<strlen(path); q++ ){
         if(path[q]=='.'){
-            q--;
-            while(q>0){
-                
-                name[e]=path[q];
-                e++;
-                q--;
-            }
+          break;  
         }
+        name[e]=path[q];
+        e++;
     }
     //printf("name is: %s\n", name);
 
@@ -215,7 +211,7 @@ int main( int argc, char *argv[])
     }
 
     //replacing space characted %20 with space in the file name
-    replaceSubstring(path,"%20"," ");
+    replaceSubstring(name,"%20"," ");
   
     // adding 32 to ascii value for hard convert to lowecase
        int y;
@@ -268,12 +264,14 @@ int main( int argc, char *argv[])
     if (n < 0) error("ERROR writing to socket");
      
     //read content of file
-    char* filecontent = (char* ) malloc(sizeof(char) * filelength);
+    uint64_t* filecontent = (uint64_t* ) malloc(sizeof(uint64_t) * filelength);
     fread(filecontent, 1, filelength, filepointer);
 
     n = write(newsockfd, filecontent, filelength);
     if (n < 0) error("ERROR writing to socket");
 
+    
+    memset(filecontent, 0, sizeof(uint64_t) * filelength);
     free(filecontent); 
     fclose(filepointer);
 
