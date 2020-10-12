@@ -19,7 +19,7 @@ void error(char *msg)
     exit(1);
 }
 
-// reference for code to replace a string : https://www.faceprep.in/c/program-to-replace-a-substring-in-a-string/
+// C does not provide a built in functionality for string replace thus reference for the code to replace a string in C : https://www.faceprep.in/c/program-to-replace-a-substring-in-a-string/
 void replaceSubstring(char string[],char sub[],char new_str[])
 {
 int stringLen,subLen,newLen;
@@ -60,17 +60,17 @@ i++;
 }
 }
 }
+// end of reference code
 
 
-
-int main(int argc, char *argv[])
+int main( int argc, char *argv[])
 {
     int sockfd, newsockfd, portno;
     socklen_t clilen;
     struct sockaddr_in serv_addr, cli_addr;
 
-    if (argc < 2) {
-        fprintf(stderr,"ERROR, no port provided\n");
+    if (argc < 3) {
+        fprintf(stderr,"ERROR, no port or directory path provided provided\n");
         exit(1);
     }
 
@@ -106,7 +106,9 @@ int main(int argc, char *argv[])
     if (n < 0) error("ERROR reading from socket");
     printf("Here is the message: %s\n", buffer);
 
-    char filepath[1000] = "/home/mininet/MIS596A_Cloud/Cloud/Cloud";
+    char filepath[1000] ;
+    strcpy(filepath, argv[2]);
+    //= "/home/mininet/MIS596A_Cloud/Cloud/Cloud";
     char path[100];
     int start_pos;
     int end_pos;
@@ -120,6 +122,7 @@ int main(int argc, char *argv[])
     int r=0;
     
     char type[10];
+    char name[20];
     int result;
     char contenttype[100];
 
@@ -154,7 +157,22 @@ int main(int argc, char *argv[])
             }
         }
     }
-    //printf("type is: %s\n", type);
+
+    //get name of file
+    int e=0;
+    for(q=strlen(path); q>0; q-- ){
+        if(path[q]=='.'){
+            q--;
+            while(q>0){
+                
+                name[e]=path[q];
+                e++;
+                q--;
+            }
+        }
+    }
+    //printf("name is: %s\n", name);
+
     int typeflag=0;
     result = strcmp(type, ".png");
     if (result == 0){
@@ -199,29 +217,53 @@ int main(int argc, char *argv[])
     //replacing space characted %20 with space in the file name
     replaceSubstring(path,"%20"," ");
   
-    // adding 32 to ascii value for lowecase, assumption all files are named lower case in the filesystem
-   int y;
-   for(y=0;y<strlen(path);y++){
-      if(path[y]>=65 && path[y]<=90)
-         path[y]=path[y]+32;
-   }
-    strcat(filepath, path);
+    // adding 32 to ascii value for hard convert to lowecase
+       int y;
+       int fileflag=0;
+       for(y=0;y<strlen(name);y++){
+          if(name[y]>=65 && name[y]<=90)
+             name[y]=name[y]+32;
+       }
+       strcat(filepath, "/");
+       strcat(filepath, name);
+       strcat(filepath, type);
+       if( access( filepath, F_OK ) != -1 ){
+        fileflag=1;
+       }
+
+       // hard convert to upper case
+        int w;
+        if (fileflag==0){
+            strcpy(filepath, argv[2]);
+          for(w=0;w<strlen(name);w++){
+          if(name[w]>=97 && name[w]<=122)
+             name[w]=name[w]-32;
+       }  
+       strcat(filepath, "/");
+       strcat(filepath, name);
+       strcat(filepath, type);
+       if( access( filepath, F_OK ) != -1 ){
+        fileflag=1;
+       }
+    }
+
+       
+    //strcat(filepath, path);
     //printf("filepath is: %s\n", filepath);
 
 
     // checking if file exists or not
     char rsp[1000];
-    if( access( filepath, F_OK ) != -1 ) {
+    if( fileflag==1) {
     FILE *filepointer = fopen(filepath, "rb"); 
 
       
     fseek(filepointer, 0L, SEEK_END);
-    int filelength = (int) ftell(filepointer);
+    long filelength = (long) ftell(filepointer);
     fseek(filepointer, 0L, SEEK_SET);
 
-    //header
-    
-    sprintf(rsp, "HTTP/1.1 200 OK\nContent-Length: %d\nContent-Type: %s\n\n", filelength, contenttype);
+    //Prepare header    
+    sprintf(rsp, "HTTP/1.1 200 OK\nContent-Length: %ld\nContent-Type: %s\n\n", filelength, contenttype);
     n = write(newsockfd, rsp, strlen(rsp));
     if (n < 0) error("ERROR writing to socket");
      
@@ -232,7 +274,7 @@ int main(int argc, char *argv[])
     n = write(newsockfd, filecontent, filelength);
     if (n < 0) error("ERROR writing to socket");
 
-    free(filecontent);  
+    free(filecontent); 
     fclose(filepointer);
 
     } else {
